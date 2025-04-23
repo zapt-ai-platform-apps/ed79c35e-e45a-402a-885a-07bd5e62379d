@@ -3,7 +3,7 @@ import { authenticateUser } from './_apiUtils.js';
 import Sentry from './_sentry.js';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { eq, like, asc, desc } from 'drizzle-orm';
+import { eq, like, ilike, asc, desc } from 'drizzle-orm';
 
 export default async function handler(req, res) {
   console.log('Companies API called with method:', req.method);
@@ -39,9 +39,9 @@ export default async function handler(req, res) {
       
       let query = db.select().from(companies);
       
-      // Apply search filter
+      // Apply search filter - now using ilike for case-insensitive search
       if (search) {
-        query = query.where(like(companies.name, `%${search}%`));
+        query = query.where(ilike(companies.name, `%${search}%`));
       }
       
       // Apply sorting
