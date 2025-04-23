@@ -71,15 +71,15 @@ export default function HomePage() {
             <div className="mt-24 grid grid-cols-3 gap-8 max-w-3xl mx-auto text-center">
               <div className="flex flex-col items-center">
                 <div className="text-5xl font-bold mb-2">30+</div>
-                <div className="text-blue-200">Days average payment time</div>
+                <div className="text-white">Days average payment time</div>
               </div>
               <div className="flex flex-col items-center">
                 <div className="text-5xl font-bold mb-2">45%</div>
-                <div className="text-blue-200">Of invoices paid late</div>
+                <div className="text-white">Of invoices paid late</div>
               </div>
               <div className="flex flex-col items-center">
                 <div className="text-5xl font-bold mb-2">1000+</div>
-                <div className="text-blue-200">Companies reviewed</div>
+                <div className="text-white">Companies reviewed</div>
               </div>
             </div>
           </div>
