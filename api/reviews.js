@@ -59,24 +59,36 @@ export default async function handler(req, res) {
       const user = await authenticateUser(req);
       const { companyId, paymentTime, rating, comment, amount, anonymous } = req.body;
       
+      console.log('Review submission received for company ID:', companyId);
+      
       if (!companyId || !paymentTime || !rating) {
         return res.status(400).json({ 
           error: 'Company ID, payment time, and rating are required' 
         });
       }
       
+      // Parse company ID and ensure it's a valid integer
+      const parsedCompanyId = parseInt(companyId);
+      if (isNaN(parsedCompanyId)) {
+        return res.status(400).json({ error: 'Invalid company ID format' });
+      }
+      
       // Check if company exists
+      console.log('Checking if company exists for ID:', parsedCompanyId);
       const company = await db.select()
         .from(companies)
-        .where(eq(companies.id, parseInt(companyId)))
+        .where(eq(companies.id, parsedCompanyId))
         .limit(1);
       
+      console.log('Company query result:', company);
+      
       if (company.length === 0) {
+        console.log('Company not found for ID:', parsedCompanyId);
         return res.status(404).json({ error: 'Company not found' });
       }
       
       const result = await db.insert(reviews).values({
-        companyId: parseInt(companyId),
+        companyId: parsedCompanyId,
         userId: user.id,
         paymentTime: parseInt(paymentTime),
         rating: parseInt(rating),

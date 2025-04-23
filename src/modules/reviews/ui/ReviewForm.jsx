@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { api as reviewsApi } from '../api';
+import * as Sentry from '@sentry/browser';
 
 export const ReviewForm = ({ companyId, onReviewAdded }) => {
   const [rating, setRating] = useState(0);
@@ -9,10 +10,12 @@ export const ReviewForm = ({ companyId, onReviewAdded }) => {
   const [anonymous, setAnonymous] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setSubmitSuccess(false);
     
     if (!rating) {
       setError('Please provide a rating');
@@ -36,6 +39,7 @@ export const ReviewForm = ({ companyId, onReviewAdded }) => {
         anonymous
       };
       
+      console.log('Submitting review for company:', companyId);
       const newReview = await reviewsApi.addReview(reviewData);
       
       // Reset form
@@ -44,6 +48,7 @@ export const ReviewForm = ({ companyId, onReviewAdded }) => {
       setComment('');
       setAmount('');
       setAnonymous(false);
+      setSubmitSuccess(true);
       
       if (onReviewAdded) {
         onReviewAdded(newReview);
@@ -51,6 +56,9 @@ export const ReviewForm = ({ companyId, onReviewAdded }) => {
       
     } catch (err) {
       console.error('Error submitting review:', err);
+      Sentry.captureException(err, {
+        extra: { companyId, context: 'ReviewForm.handleSubmit' }
+      });
       setError(err.message || 'Failed to submit review. Please try again.');
     } finally {
       setLoading(false);
@@ -64,6 +72,12 @@ export const ReviewForm = ({ companyId, onReviewAdded }) => {
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
           {error}
+        </div>
+      )}
+      
+      {submitSuccess && (
+        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+          Your review has been submitted successfully!
         </div>
       )}
       

@@ -7,7 +7,7 @@ export const api = {
       
       const response = await fetch(`/api/reviews?companyId=${companyId}`, {
         headers: {
-          Authorization: `Bearer ${session?.session?.access_token}`
+          Authorization: `Bearer ${session?.access_token}`
         }
       });
       
@@ -30,7 +30,7 @@ export const api = {
       
       const response = await fetch(`/api/reviews?userId=${userId}`, {
         headers: {
-          Authorization: `Bearer ${session?.session?.access_token}`
+          Authorization: `Bearer ${session?.access_token}`
         }
       });
       
@@ -51,6 +51,8 @@ export const api = {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
+      console.log('Submitting review for company ID:', reviewData.companyId);
+      
       const response = await fetch('/api/reviews', {
         method: 'POST',
         headers: {
@@ -62,6 +64,7 @@ export const api = {
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Server error response:', errorData);
         throw new Error(errorData.error || 'Failed to add review');
       }
       
