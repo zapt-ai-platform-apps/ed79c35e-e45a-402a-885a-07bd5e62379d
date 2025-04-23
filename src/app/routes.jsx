@@ -11,6 +11,7 @@ const AddCompanyPage = lazy(() => import('./pages/AddCompany'));
 const ProfilePage = lazy(() => import('./pages/Profile'));
 const HowItWorksPage = lazy(() => import('./pages/HowItWorks'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
+const SearchResultsPage = lazy(() => import('./pages/SearchResults'));
 
 // Protected route component
 const ProtectedRoute = ({ children }) => {
@@ -49,6 +50,7 @@ export const AppRoutes = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/companies" element={<CompaniesPage />} />
         <Route path="/companies/:companyId" element={<CompanyDetailPage />} />
+        <Route path="/search" element={<SearchResultsPage />} />
         <Route 
           path="/add-company" 
           element={

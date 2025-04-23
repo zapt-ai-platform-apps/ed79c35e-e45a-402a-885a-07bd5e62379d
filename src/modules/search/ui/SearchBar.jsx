@@ -7,9 +7,15 @@ export const SearchBar = ({ initialValue = '', onSearch }) => {
   
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Don't proceed with empty searches
+    if (!search.trim()) return;
+    
     if (onSearch) {
+      // If onSearch callback is provided, use it (for Companies page search functionality)
       onSearch(search);
     } else {
+      // Otherwise navigate to search results page
       navigate(`/search?q=${encodeURIComponent(search)}`);
     }
   };
@@ -38,6 +44,7 @@ export const SearchBar = ({ initialValue = '', onSearch }) => {
         <button
           type="submit"
           className="absolute inset-y-0 right-0 px-4 text-white bg-blue-600 rounded-r-lg hover:bg-blue-700 cursor-pointer"
+          disabled={!search.trim()}
         >
           Search
         </button>
