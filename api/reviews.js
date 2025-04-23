@@ -40,7 +40,8 @@ export default async function handler(req, res) {
       
       // Get reviews for a specific company
       if (req.query.companyId) {
-        const companyId = parseInt(req.query.companyId);
+        // Use the companyId as-is without parseInt to preserve precision for large numbers
+        const companyId = req.query.companyId;
         
         const result = await db.select()
           .from(reviews)
@@ -67,28 +68,27 @@ export default async function handler(req, res) {
         });
       }
       
-      // Parse company ID and ensure it's a valid integer
-      const parsedCompanyId = parseInt(companyId);
-      if (isNaN(parsedCompanyId)) {
+      // Don't parse the company ID to preserve precision
+      if (!companyId) {
         return res.status(400).json({ error: 'Invalid company ID format' });
       }
       
       // Check if company exists
-      console.log('Checking if company exists for ID:', parsedCompanyId);
+      console.log('Checking if company exists for ID:', companyId);
       const company = await db.select()
         .from(companies)
-        .where(eq(companies.id, parsedCompanyId))
+        .where(eq(companies.id, companyId))
         .limit(1);
       
       console.log('Company query result:', company);
       
       if (company.length === 0) {
-        console.log('Company not found for ID:', parsedCompanyId);
+        console.log('Company not found for ID:', companyId);
         return res.status(404).json({ error: 'Company not found' });
       }
       
       const result = await db.insert(reviews).values({
-        companyId: parsedCompanyId,
+        companyId: companyId,
         userId: user.id,
         paymentTime: parseInt(paymentTime),
         rating: parseInt(rating),

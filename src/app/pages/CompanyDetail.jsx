@@ -211,7 +211,7 @@ export default function CompanyDetailPage() {
           {user ? (
             <div className="mb-6">
               <ReviewForm 
-                companyId={parseInt(companyId)}
+                companyId={companyId} // Pass the company ID as-is without parseInt
                 onReviewAdded={handleReviewAdded}
               />
             </div>

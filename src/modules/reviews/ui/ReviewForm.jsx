@@ -2,57 +2,72 @@ import React, { useState } from 'react';
 import { api as reviewsApi } from '../api';
 import * as Sentry from '@sentry/browser';
 
-export const ReviewForm = ({ companyId, onReviewAdded }) => {
-  const [rating, setRating] = useState(0);
-  const [paymentTime, setPaymentTime] = useState('');
-  const [comment, setComment] = useState('');
-  const [amount, setAmount] = useState('');
-  const [anonymous, setAnonymous] = useState(false);
+export function ReviewForm({ companyId, onReviewAdded }) {
+  const [formData, setFormData] = useState({
+    paymentTime: '',
+    rating: 3,
+    comment: '',
+    amount: '',
+    anonymous: false
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [success, setSuccess] = useState(false);
+  
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+  
+  const handleRatingChange = (newRating) => {
+    setFormData(prev => ({
+      ...prev,
+      rating: newRating
+    }));
+  };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSubmitSuccess(false);
-    
-    if (!rating) {
-      setError('Please provide a rating');
-      return;
-    }
-    
-    if (!paymentTime) {
-      setError('Please enter how many days it took to get paid');
-      return;
-    }
-    
     try {
       setLoading(true);
+      setError(null);
       
+      // Don't parse company ID to preserve precision for large numbers
       const reviewData = {
-        companyId,
-        rating,
-        paymentTime: parseInt(paymentTime),
-        comment: comment.trim() || null,
-        amount: amount ? parseInt(amount) : null,
-        anonymous
+        companyId: companyId,
+        paymentTime: formData.paymentTime,
+        rating: formData.rating,
+        comment: formData.comment,
+        amount: formData.amount || undefined,
+        anonymous: formData.anonymous
       };
       
-      console.log('Submitting review for company:', companyId);
+      console.log('Submitting review data:', reviewData);
+      
       const newReview = await reviewsApi.addReview(reviewData);
+      setSuccess(true);
       
       // Reset form
-      setRating(0);
-      setPaymentTime('');
-      setComment('');
-      setAmount('');
-      setAnonymous(false);
-      setSubmitSuccess(true);
+      setFormData({
+        paymentTime: '',
+        rating: 3,
+        comment: '',
+        amount: '',
+        anonymous: false
+      });
       
+      // Notify parent component
       if (onReviewAdded) {
         onReviewAdded(newReview);
       }
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccess(false);
+      }, 3000);
       
     } catch (err) {
       console.error('Error submitting review:', err);
@@ -65,116 +80,128 @@ export const ReviewForm = ({ companyId, onReviewAdded }) => {
     }
   };
   
+  const StarRating = ({ rating, onRatingChange }) => {
+    return (
+      <div className="flex items-center">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onRatingChange(star)}
+            className="text-2xl focus:outline-none cursor-pointer"
+            aria-label={`Rate ${star} stars`}
+          >
+            <span className={star <= rating ? 'text-yellow-500' : 'text-gray-300'}>★</span>
+          </button>
+        ))}
+      </div>
+    );
+  };
+  
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-xl font-semibold mb-4">Share Your Experience</h3>
+      <h2 className="text-xl font-semibold mb-4">Share Your Experience</h2>
       
-      {error && (
-        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
-          {error}
-        </div>
-      )}
-      
-      {submitSuccess && (
-        <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+      {success && (
+        <div className="mb-4 p-3 bg-green-100 border border-green-200 text-green-800 rounded-md">
           Your review has been submitted successfully!
         </div>
       )}
       
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-800 rounded-md">
+          {error}
+        </div>
+      )}
+      
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2">
-            Rating
-          </label>
-          <div className="flex items-center">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <button
-                key={star}
-                type="button"
-                onClick={() => setRating(star)}
-                className="text-2xl focus:outline-none cursor-pointer"
-              >
-                <span className={star <= rating ? 'text-yellow-500' : 'text-gray-300'}>
-                  ★
-                </span>
-              </button>
-            ))}
-            <span className="ml-2 text-sm text-gray-600">
-              {rating ? `${rating} stars` : 'Select rating'}
-            </span>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-gray-700 font-medium mb-2" htmlFor="paymentTime">
+              How long did they take to pay? (days) *
+            </label>
+            <input
+              type="number"
+              id="paymentTime"
+              name="paymentTime"
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 box-border"
+              value={formData.paymentTime}
+              onChange={handleChange}
+              min="1"
+              max="365"
+              required
+            />
           </div>
-        </div>
-        
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2" htmlFor="paymentTime">
-            Days to Payment
-          </label>
-          <input
-            type="number"
-            id="paymentTime"
-            value={paymentTime}
-            onChange={(e) => setPaymentTime(e.target.value)}
-            className="w-full px-3 py-2 border box-border rounded-md"
-            placeholder="e.g. 30, 60, 90"
-            min="0"
-            required
-          />
-        </div>
-        
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2" htmlFor="amount">
-            Invoice Amount (optional)
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-600">
-              $
-            </span>
+          
+          <div>
+            <label className="block text-gray-700 font-medium mb-2" htmlFor="amount">
+              Invoice amount (optional)
+            </label>
             <input
               type="number"
               id="amount"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 border box-border rounded-md"
-              placeholder="Amount in USD"
-              min="0"
+              name="amount"
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 box-border"
+              value={formData.amount}
+              onChange={handleChange}
+              min="1"
             />
           </div>
         </div>
         
-        <div className="mb-4">
+        <div className="mt-4">
+          <label className="block text-gray-700 font-medium mb-2">
+            Rate your overall experience *
+          </label>
+          <StarRating
+            rating={formData.rating}
+            onRatingChange={handleRatingChange}
+          />
+        </div>
+        
+        <div className="mt-4">
           <label className="block text-gray-700 font-medium mb-2" htmlFor="comment">
-            Comments (optional)
+            Additional comments
           </label>
           <textarea
             id="comment"
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="w-full px-3 py-2 border box-border rounded-md"
+            name="comment"
             rows="3"
-            placeholder="Share your experience with this company's payment practices"
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 box-border"
+            value={formData.comment}
+            onChange={handleChange}
           ></textarea>
         </div>
         
-        <div className="mb-5">
-          <label className="flex items-center">
-            <input
-              type="checkbox"
-              checked={anonymous}
-              onChange={(e) => setAnonymous(e.target.checked)}
-              className="mr-2"
-            />
-            <span className="text-sm text-gray-700">Post anonymously</span>
+        <div className="mt-4 flex items-center">
+          <input
+            type="checkbox"
+            id="anonymous"
+            name="anonymous"
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            checked={formData.anonymous}
+            onChange={handleChange}
+          />
+          <label htmlFor="anonymous" className="ml-2 block text-gray-700">
+            Submit anonymously
           </label>
         </div>
         
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 cursor-pointer disabled:opacity-50"
-        >
-          {loading ? 'Submitting...' : 'Submit Review'}
-        </button>
+        <div className="mt-6">
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 cursor-pointer"
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex items-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Submitting...
+              </div>
+            ) : 'Submit Review'}
+          </button>
+        </div>
       </form>
     </div>
   );
-};
+}
