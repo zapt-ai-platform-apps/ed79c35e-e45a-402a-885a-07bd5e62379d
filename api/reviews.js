@@ -23,16 +23,15 @@ export default async function handler(req, res) {
           return res.status(403).json({ error: 'Not authorized to view these reviews' });
         }
         
-        // Join reviews with companies to get company names
-        const query = `
+        // Using the correct postgres.js syntax for raw queries
+        // With postgres.js, you call the client directly as a tagged template literal
+        const userReviews = await client`
           SELECT r.*, c.name as company_name
           FROM reviews r
           JOIN companies c ON r.company_id = c.id
-          WHERE r.user_id = $1
+          WHERE r.user_id = ${user.id}
           ORDER BY r.created_at DESC
         `;
-        
-        const userReviews = await client.query(query, [user.id]);
         
         console.log(`Fetched ${userReviews.length} reviews for user ${user.id}`);
         return res.status(200).json(userReviews);
