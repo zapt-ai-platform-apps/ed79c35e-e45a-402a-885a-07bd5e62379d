@@ -13,9 +13,10 @@ export default function App() {
         <main>
           <AppRoutes />
         </main>
-        <footer className="bg-white p-4 text-center text-sm text-gray-600 border-t">
-          <a href="https://www.zapt.ai" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800">
-            Made on ZAPT
+        <footer className="bg-white p-6 text-center text-sm text-gray-600 border-t">
+          <a href="https://www.zapt.ai" target="_blank" rel="noopener noreferrer" className="hover:text-gray-800 flex items-center justify-center gap-2">
+            <span>Made on</span>
+            <span className="font-semibold text-blue-600">ZAPT</span>
           </a>
         </footer>
       </AppProviders>
