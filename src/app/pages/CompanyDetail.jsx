@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { api as companiesApi } from '@/modules/companies/api';
 import { api as reviewsApi } from '@/modules/reviews/api';
 import { ReviewForm } from '@/modules/reviews/ui/ReviewForm';
 import { ReviewList } from '@/modules/reviews/ui/ReviewList';
@@ -24,55 +25,25 @@ export default function CompanyDetailPage() {
       try {
         setLoading(true);
         
-        // TODO: Replace with actual API call once implemented
-        // For now, using mock data
-        const companyData = {
-          id: parseInt(companyId),
-          name: "Sample Company",
-          industry: "Technology",
-          website: "https://example.com",
-          description: "A sample company description"
-        };
-        
+        // Fetch company data
+        const companyData = await companiesApi.getCompany(companyId);
         setCompany(companyData);
         
         // Fetch reviews
-        try {
-          const reviewsData = await reviewsApi.getReviews(companyId);
-          
-          // If no reviews yet, use empty array
-          const processedReviews = reviewsData.length > 0 ? reviewsData : [
-            {
-              id: 1,
-              companyId: parseInt(companyId),
-              userId: "sample-user-id",
-              paymentTime: 45,
-              rating: 4,
-              comment: "Generally good experience, but payment was a bit slow.",
-              amount: 5000,
-              anonymous: false,
-              createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-            }
-          ];
-          
-          setReviews(processedReviews);
-          
-          // Calculate stats
-          if (processedReviews.length > 0) {
-            const totalRating = processedReviews.reduce((sum, review) => sum + review.rating, 0);
-            const totalPaymentTime = processedReviews.reduce((sum, review) => sum + review.paymentTime, 0);
-            
-            setStats({
-              averageRating: totalRating / processedReviews.length,
-              averagePaymentTime: totalPaymentTime / processedReviews.length,
-              reviewCount: processedReviews.length
-            });
-          }
-        } catch (err) {
-          console.error('Error fetching reviews:', err);
-          Sentry.captureException(err);
-        }
+        const reviewsData = await reviewsApi.getReviews(companyId);
+        setReviews(reviewsData);
         
+        // Calculate stats
+        if (reviewsData.length > 0) {
+          const totalRating = reviewsData.reduce((sum, review) => sum + review.rating, 0);
+          const totalPaymentTime = reviewsData.reduce((sum, review) => sum + review.paymentTime, 0);
+          
+          setStats({
+            averageRating: totalRating / reviewsData.length,
+            averagePaymentTime: totalPaymentTime / reviewsData.length,
+            reviewCount: reviewsData.length
+          });
+        }
       } catch (err) {
         console.error('Error fetching company data:', err);
         Sentry.captureException(err);

@@ -12,30 +12,12 @@ export default function ProfilePage() {
   
   useEffect(() => {
     const fetchUserReviews = async () => {
+      if (!user) return;
+      
       try {
         setLoading(true);
-        // TODO: Implement API to fetch user reviews
-        // For now, using mock data
-        setReviews([
-          {
-            id: 1,
-            companyId: 1,
-            companyName: "Acme Corporation",
-            paymentTime: 45,
-            rating: 4,
-            comment: "Generally good experience, but payment was a bit slow.",
-            createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-          },
-          {
-            id: 2,
-            companyId: 2,
-            companyName: "Global Industries",
-            paymentTime: 65,
-            rating: 3,
-            comment: "Had to follow up multiple times for payment.",
-            createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ]);
+        const userReviews = await reviewsApi.getUserReviews(user.id);
+        setReviews(userReviews);
       } catch (err) {
         console.error('Error fetching user reviews:', err);
         Sentry.captureException(err);
@@ -46,7 +28,7 @@ export default function ProfilePage() {
     };
     
     fetchUserReviews();
-  }, []);
+  }, [user]);
   
   const handleDeleteReview = async (reviewId) => {
     try {
@@ -125,11 +107,11 @@ export default function ProfilePage() {
               {reviews.map(review => (
                 <div key={review.id} className="bg-white rounded-lg shadow-md p-4">
                   <div className="flex justify-between items-start">
-                    <Link to={`/companies/${review.companyId}`} className="text-lg font-semibold text-blue-600 hover:underline">
-                      {review.companyName}
+                    <Link to={`/companies/${review.company_id}`} className="text-lg font-semibold text-blue-600 hover:underline">
+                      {review.company_name}
                     </Link>
                     <div className="text-sm text-gray-500">
-                      {formatDate(review.createdAt)}
+                      {formatDate(review.created_at)}
                     </div>
                   </div>
                   
@@ -148,7 +130,7 @@ export default function ProfilePage() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-gray-700">
-                      Paid in <span className="font-medium">{review.paymentTime} days</span>
+                      Paid in <span className="font-medium">{review.payment_time} days</span>
                     </span>
                   </div>
                   

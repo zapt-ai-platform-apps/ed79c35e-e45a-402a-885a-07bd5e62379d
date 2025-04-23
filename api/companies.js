@@ -12,8 +12,25 @@ export default async function handler(req, res) {
     const client = postgres(process.env.COCKROACH_DB_URL);
     const db = drizzle(client);
     
-    // GET - fetch companies
+    // GET - fetch companies or a single company
     if (req.method === 'GET') {
+      // Get a single company by ID
+      if (req.query.id) {
+        const companyId = parseInt(req.query.id);
+        const result = await db.select()
+          .from(companies)
+          .where(eq(companies.id, companyId))
+          .limit(1);
+          
+        if (result.length === 0) {
+          return res.status(404).json({ error: 'Company not found' });
+        }
+        
+        console.log(`Fetched company with ID ${companyId}`);
+        return res.status(200).json(result[0]);
+      }
+      
+      // Get all companies with optional filtering
       const { search, sort, order, limit = 20, offset = 0 } = req.query;
       
       let query = db.select().from(companies);

@@ -3,7 +3,7 @@ import { authenticateUser } from './_apiUtils.js';
 import Sentry from './_sentry.js';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, asc, desc } from 'drizzle-orm';
 
 export default async function handler(req, res) {
   console.log('Reviews API called with method:', req.method);
@@ -12,20 +12,46 @@ export default async function handler(req, res) {
     const client = postgres(process.env.COCKROACH_DB_URL);
     const db = drizzle(client);
     
-    // GET - fetch reviews for a company
+    // GET - fetch reviews for a company or user
     if (req.method === 'GET') {
-      const { companyId } = req.query;
-      
-      if (!companyId) {
-        return res.status(400).json({ error: 'Company ID is required' });
+      // Get reviews for a specific user
+      if (req.query.userId) {
+        const user = await authenticateUser(req);
+        
+        // Only allow users to get their own reviews
+        if (user.id !== req.query.userId) {
+          return res.status(403).json({ error: 'Not authorized to view these reviews' });
+        }
+        
+        // Join reviews with companies to get company names
+        const query = `
+          SELECT r.*, c.name as company_name
+          FROM reviews r
+          JOIN companies c ON r.company_id = c.id
+          WHERE r.user_id = $1
+          ORDER BY r.created_at DESC
+        `;
+        
+        const userReviews = await client.query(query, [user.id]);
+        
+        console.log(`Fetched ${userReviews.length} reviews for user ${user.id}`);
+        return res.status(200).json(userReviews);
       }
       
-      const result = await db.select()
-        .from(reviews)
-        .where(eq(reviews.companyId, parseInt(companyId)));
+      // Get reviews for a specific company
+      if (req.query.companyId) {
+        const companyId = parseInt(req.query.companyId);
+        
+        const result = await db.select()
+          .from(reviews)
+          .where(eq(reviews.companyId, companyId))
+          .orderBy(desc(reviews.createdAt));
+        
+        console.log(`Fetched ${result.length} reviews for company ${companyId}`);
+        return res.status(200).json(result);
+      }
       
-      console.log(`Fetched ${result.length} reviews for company ${companyId}`);
-      return res.status(200).json(result);
+      return res.status(400).json({ error: 'Company ID or User ID is required' });
     }
     
     // POST - add new review

@@ -7,7 +7,7 @@ export const api = {
       
       const response = await fetch(`/api/reviews?companyId=${companyId}`, {
         headers: {
-          Authorization: `Bearer ${session?.access_token}`
+          Authorization: `Bearer ${session?.session?.access_token}`
         }
       });
       
@@ -20,6 +20,29 @@ export const api = {
       return data;
     } catch (error) {
       console.error('Error fetching reviews:', error);
+      throw error;
+    }
+  },
+
+  getUserReviews: async (userId) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`/api/reviews?userId=${userId}`, {
+        headers: {
+          Authorization: `Bearer ${session?.session?.access_token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch user reviews');
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching user reviews:', error);
       throw error;
     }
   },

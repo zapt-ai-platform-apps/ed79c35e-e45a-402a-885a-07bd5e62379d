@@ -15,39 +15,7 @@ export default function CompaniesPage() {
     try {
       setLoading(true);
       const data = await companiesApi.getCompanies({ search });
-      
-      // TODO: Remove this mock data once backend is fully implemented
-      const processedCompanies = data.length > 0 ? data : [
-        {
-          id: 1,
-          name: "Acme Corporation",
-          industry: "Technology",
-          website: "https://example.com",
-          averageRating: 4.2,
-          averagePaymentTime: 45,
-          reviewCount: 24
-        },
-        {
-          id: 2,
-          name: "Global Industries",
-          industry: "Manufacturing",
-          website: "https://example.com",
-          averageRating: 3.5,
-          averagePaymentTime: 65,
-          reviewCount: 18
-        },
-        {
-          id: 3,
-          name: "Innovate Solutions",
-          industry: "Consulting",
-          website: "https://example.com",
-          averageRating: 4.7,
-          averagePaymentTime: 15,
-          reviewCount: 32
-        }
-      ];
-      
-      setCompanies(processedCompanies);
+      setCompanies(data);
     } catch (err) {
       console.error('Error fetching companies:', err);
       Sentry.captureException(err);
