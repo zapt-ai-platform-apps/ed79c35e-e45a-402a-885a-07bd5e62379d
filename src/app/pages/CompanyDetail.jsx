@@ -24,6 +24,7 @@ export default function CompanyDetailPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log(`Fetching data for company ID: ${companyId}`);
         
         // Fetch company data
         const companyData = await companiesApi.getCompany(companyId);
@@ -46,14 +47,18 @@ export default function CompanyDetailPage() {
         }
       } catch (err) {
         console.error('Error fetching company data:', err);
-        Sentry.captureException(err);
+        Sentry.captureException(err, {
+          extra: { companyId, context: 'CompanyDetail.fetchData' }
+        });
         setError('Failed to load company data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
     
-    fetchData();
+    if (companyId) {
+      fetchData();
+    }
   }, [companyId]);
   
   const handleReviewAdded = (newReview) => {
@@ -110,6 +115,20 @@ export default function CompanyDetailPage() {
         <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
           <h2 className="text-2xl font-bold text-red-600 mb-2">Error</h2>
           <p className="text-gray-600 mb-4">{error}</p>
+          <Link to="/companies" className="text-blue-600 hover:underline">
+            Go back to companies
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!company) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="text-center max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Company Not Found</h2>
+          <p className="text-gray-600 mb-4">Sorry, we couldn't find the company you're looking for.</p>
           <Link to="/companies" className="text-blue-600 hover:underline">
             Go back to companies
           </Link>

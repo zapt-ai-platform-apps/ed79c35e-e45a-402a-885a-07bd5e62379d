@@ -1,4 +1,5 @@
 import { supabase } from '@/supabaseClient';
+import * as Sentry from '@sentry/browser';
 
 export const api = {
   getCompanies: async (options = {}) => {
@@ -29,12 +30,16 @@ export const api = {
       return data;
     } catch (error) {
       console.error('Error fetching companies:', error);
+      Sentry.captureException(error, {
+        extra: { context: 'getCompanies' }
+      });
       throw error;
     }
   },
   
   getCompany: async (companyId) => {
     try {
+      console.log(`Requesting company with ID: ${companyId}`);
       const { data: session } = await supabase.auth.getSession();
       
       const response = await fetch(`/api/companies?id=${companyId}`, {
@@ -45,13 +50,18 @@ export const api = {
       
       if (!response.ok) {
         const errorData = await response.json();
+        console.error(`API error response:`, errorData);
         throw new Error(errorData.error || 'Failed to fetch company');
       }
       
       const data = await response.json();
+      console.log(`Successfully fetched company data:`, data);
       return data;
     } catch (error) {
-      console.error('Error fetching company:', error);
+      console.error(`Error fetching company with ID ${companyId}:`, error);
+      Sentry.captureException(error, {
+        extra: { companyId, context: 'getCompany' }
+      });
       throw error;
     }
   },
@@ -78,6 +88,9 @@ export const api = {
       return data;
     } catch (error) {
       console.error('Error adding company:', error);
+      Sentry.captureException(error, {
+        extra: { companyData, context: 'addCompany' }
+      });
       throw error;
     }
   }

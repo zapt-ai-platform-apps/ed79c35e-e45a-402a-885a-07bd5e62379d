@@ -16,17 +16,21 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       // Get a single company by ID
       if (req.query.id) {
-        const companyId = parseInt(req.query.id);
+        // Use the ID as-is without parseInt to preserve precision for large numbers
+        const companyId = req.query.id;
+        console.log(`Looking up company with ID: ${companyId}`);
+        
         const result = await db.select()
           .from(companies)
           .where(eq(companies.id, companyId))
           .limit(1);
           
         if (result.length === 0) {
+          console.log(`No company found with ID ${companyId}`);
           return res.status(404).json({ error: 'Company not found' });
         }
         
-        console.log(`Fetched company with ID ${companyId}`);
+        console.log(`Successfully fetched company with ID ${companyId}`);
         return res.status(200).json(result[0]);
       }
       
